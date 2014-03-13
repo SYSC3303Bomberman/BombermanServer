@@ -1,17 +1,17 @@
 package server;
 
-import java.net.DatagramSocket;
-import java.util.concurrent.BlockingQueue;
+import java.net.*;
+import java.util.concurrent.*;
 
 public class ClientHandler implements Runnable{
 	
-	BlockingQueue<DatagramSocket> clientSocket;
+	BlockingQueue<DatagramPacket> clientQueue;
 	BlockingQueue<String> receiverQueue, senderQueue;
 
-	public ClientHandler(BlockingQueue<DatagramSocket> clientSocket,
+	public ClientHandler(BlockingQueue<DatagramPacket> clientQueue,
 			BlockingQueue<String> receiverQueue,
 			BlockingQueue<String> senderQueue) {
-		this.clientSocket = clientSocket;
+		this.clientQueue = clientQueue;
 		this.receiverQueue = receiverQueue;
 		this.senderQueue = senderQueue;
 	}

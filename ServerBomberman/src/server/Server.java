@@ -5,21 +5,23 @@ import java.util.concurrent.*;
 
 public class Server {
 
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException, SocketException {
 		// TODO Auto-generated method stub
 		BlockingQueue<String> receiverQueue = new LinkedBlockingQueue<>();
 		BlockingQueue<String> senderQueue = new LinkedBlockingQueue<>();
-		BlockingQueue<DatagramSocket> clientSocket = new LinkedBlockingQueue<>();
+		BlockingQueue<DatagramPacket> clientQueue = new LinkedBlockingQueue<>();
+		DatagramSocket serverSocket = new DatagramSocket(10000);
 		
-		Thread listener = new Thread(new ClientListener(clientSocket, receiverQueue, senderQueue),"ClientListener");
-		Thread handler = new Thread(new ClientHandler(clientSocket, receiverQueue, senderQueue),"ClientHandler");
+		Thread listener = new Thread(new ClientListener(clientQueue, receiverQueue, serverSocket),"ClientListener");
+		Thread handler = new Thread(new ClientHandler(clientQueue, receiverQueue, senderQueue),"ClientHandler");
 		
 		listener.start();
 		handler.start();
 		
 		listener.join();
-		handler.start();
+		handler.join();
 		
+		serverSocket.close();
 	}
 
 }
