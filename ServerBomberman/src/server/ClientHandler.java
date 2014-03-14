@@ -6,20 +6,33 @@ import java.util.concurrent.*;
 public class ClientHandler implements Runnable{
 	
 	BlockingQueue<DatagramPacket> clientQueue;
-	BlockingQueue<String> receiverQueue, senderQueue;
+	BlockingQueue<String> senderQueue;
+	DatagramSocket serverSocket;
 
 	public ClientHandler(BlockingQueue<DatagramPacket> clientQueue,
-			BlockingQueue<String> receiverQueue,
-			BlockingQueue<String> senderQueue) {
+			BlockingQueue<String> senderQueue, 
+			DatagramSocket serverSocket) {
 		this.clientQueue = clientQueue;
-		this.receiverQueue = receiverQueue;
 		this.senderQueue = senderQueue;
+		this.serverSocket = serverSocket;
 	}
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
+		byte sentData[] = new byte[1];
+		DatagramPacket packetToSend, clientPacket[] = new DatagramPacket[2];
 		
+		for(int i=0;i<clientQueue.size();i++){
+			try {
+				clientPacket[i] = clientQueue.take();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		while(true){
+			
+		}
 	}
 
 }

@@ -1,5 +1,7 @@
 package server;
 
+import gamemechanic.*;
+
 import java.io.IOException;
 import java.net.*;
 import java.util.concurrent.*;
@@ -7,27 +9,37 @@ import java.util.concurrent.*;
 public class ClientListener implements Runnable {
 	
 	BlockingQueue<DatagramPacket> clientQueue;
-	BlockingQueue<String> receiverQueue;
+	BlockingQueue<DatagramPacket> receiverQueue;
 	DatagramSocket serverSocket;
+	Board gameboard;
 
 	public ClientListener(BlockingQueue<DatagramPacket> clientQueue,
-			BlockingQueue<String> receiverQueue,
-			DatagramSocket serverSocket) {
+			BlockingQueue<DatagramPacket> receiverQueue,
+			DatagramSocket serverSocket, 
+			Board gameboard) {
 		this.clientQueue = clientQueue;
 		this.receiverQueue = receiverQueue;
 		this.serverSocket = serverSocket;
+		this.gameboard = gameboard;
 	}
 	
 	private void clientInitialization() throws SocketException, IOException, InterruptedException{
 		byte revData[] = new byte[1];
-		DatagramPacket receivedPacket = new DatagramPacket(revData,revData.length);
+		DatagramPacket receivedConnectAckPacket = new DatagramPacket(revData,revData.length), serverAckPacket;
+		DatagramSocket serverClientSocket;
 		Thread threads[] = new Thread[2];
 		
 		do {
-			serverSocket.receive(receivedPacket);
-			clientQueue.put(receivedPacket);
-
-			threads[clientQueue.size()-1] = new Thread(new ClientThread(receiverQueue, serverSocket),"Client"+clientQueue.size());
+			serverSocket.receive(receivedConnectAckPacket);
+			clientQueue.put(receivedConnectAckPacket);
+			
+			serverClientSocket = new DatagramSocket();
+			serverAckPacket = new DatagramPacket(revData,revData.length,receivedConnectAckPacket.getSocketAddress());
+			serverClientSocket.send(serverAckPacket);
+			
+			gameboard.addPlayer(receivedConnectAckPacket.getSocketAddress());
+			
+			threads[clientQueue.size()-1] = new Thread(new ClientThread(receiverQueue, serverClientSocket, gameboard),"Client"+clientQueue.size());
 			threads[clientQueue.size()-1].start();
 			System.out.println("Client"+clientQueue.size());
 		} while(clientQueue.size()<2);
