@@ -18,4 +18,6 @@ public class Obstacle {
 	public int getY(){
 		return y;
 	}
+	
 }
+

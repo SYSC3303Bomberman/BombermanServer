@@ -1,28 +1,29 @@
 package server;
 
 import gamemechanic.*;
+import comprotocol.*;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.concurrent.*;
+import java.util.*;
 
 public class ClientListener implements Runnable {
 	
-	BlockingQueue<DatagramPacket> clientQueue;
-	BlockingQueue<DatagramPacket> receiverQueue;
+	ArrayList<Player> acceptedClients;
+	ArrayList<DatagramPacket> rejectedClients;
 	DatagramSocket serverSocket;
 	Board gameboard;
 
-	public ClientListener(BlockingQueue<DatagramPacket> clientQueue,
-			BlockingQueue<DatagramPacket> receiverQueue,
+	public ClientListener(ArrayList<Player> acceptedClients,
+			ArrayList<DatagramPacket> rejectedClients,
 			DatagramSocket serverSocket, 
 			Board gameboard) {
-		this.clientQueue = clientQueue;
-		this.receiverQueue = receiverQueue;
+		this.acceptedClients = acceptedClients;
+		this.rejectedClients = rejectedClients;
 		this.serverSocket = serverSocket;
 		this.gameboard = gameboard;
 	}
-	
+	/*
 	private void clientInitialization() throws SocketException, IOException, InterruptedException{
 		byte revData[] = new byte[1];
 		DatagramPacket receivedConnectAckPacket = new DatagramPacket(revData,revData.length), serverAckPacket;
@@ -47,13 +48,29 @@ public class ClientListener implements Runnable {
 		for(int i=1;i<=threads.length;i++){
 			threads[i].join();
 		}
-	}
-
+	}*/
+	
 	@Override
 	public void run() {
 		try {
-			clientInitialization();
-		} catch (IOException | InterruptedException e) {	
+			AckPacket clientAckPacket = new AckPacket();
+			String clientsName = "player";
+			
+			while(true) {
+				DatagramPacket clientAckDPacket = clientAckPacket.toDatagramPacket();
+				serverSocket.receive(clientAckDPacket);
+				System.out.println("Received from "+clientAckDPacket.getSocketAddress());
+				
+				if(acceptedClients.size() < ServerInfo.MAX_ACCEPTED_CLIENTS.getValue()){
+					//System.out.println("###Accepted");
+					gameboard.addPlayer(clientAckDPacket.getSocketAddress(),clientsName+acceptedClients.size());
+					acceptedClients.add(gameboard.players.get(acceptedClients.size()));
+				}else{
+					System.out.println("REJECTED");
+					rejectedClients.add(clientAckDPacket);
+				}
+			}
+		} catch (IOException e) {	
 			e.printStackTrace();
 		}
 	}

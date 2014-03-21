@@ -1,33 +1,38 @@
 package server;
 
 import java.net.*;
+import java.util.ArrayList;
 import java.util.concurrent.*;
+
 import gamemechanic.*;
 
 public class Server {
 
 	public static void main(String[] args) throws InterruptedException, SocketException {
-		// TODO Auto-generated method stub
-		BlockingQueue<DatagramPacket> receiverQueue = new LinkedBlockingQueue<>();
-		//BlockingQueue<String> senderQueue = new LinkedBlockingQueue<>();
-		BlockingQueue<DatagramPacket> clientQueue = new LinkedBlockingQueue<>();
-		DatagramSocket serverSocket = new DatagramSocket(10000);
 		Board gameboard = new Board();
 		
+		BlockingQueue<DatagramPacket> receiverQueue = new LinkedBlockingQueue<>();
+		BlockingQueue<Board> senderQueue = new LinkedBlockingQueue<Board>(); 
+		ArrayList<Player> acceptedClients = new ArrayList<Player>();
+		ArrayList<DatagramPacket> rejectedClients = new ArrayList<DatagramPacket>();
+		DatagramSocket serverSocket = new DatagramSocket(ServerInfo.INITIAL_SERVER_SOCKET.getValue());
+		
 		gameboard.printBoard();
-		//---Instead of clientQueue we should have a Player queue  
-		Thread listener = new Thread(new ClientListener(clientQueue, receiverQueue, serverSocket, gameboard),"ClientListener");
-		//Thread handler = new Thread(new ClientHandler(clientQueue, senderQueue, serverSocket),"ClientHandler");
-		//Thread logger = new Thread(new TestLogger(),"TestLogger");
-		Thread game = new Thread(new Game(receiverQueue, gameboard),"Game");
+		  
+		Thread listener = new Thread(new ClientListener(acceptedClients, rejectedClients, serverSocket, gameboard),"ClientListener");
+		Thread handler = new Thread(new ActiveClientHandler(acceptedClients, receiverQueue, gameboard),"ClientHandler");
+		Thread updater = new Thread(new ClientStateUpdater(receiverQueue, senderQueue, gameboard),"Updater");
+		Thread sender = new Thread(new Sender(senderQueue, serverSocket));
 		
 		listener.start();
-		//handler.start();
-		game.start();
+		handler.start();
+		updater.start();
+		sender.start();
 		
 		listener.join();
-		//handler.join();
-		game.join();
+		handler.join();
+		updater.join();
+		sender.join();
 		
 		serverSocket.close();
 	}
